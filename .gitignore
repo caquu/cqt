@@ -1,0 +1,8 @@
+Libs/PEAR/.channels/*
+Libs/PEAR/.depdb
+Libs/PEAR/.depdblock
+Libs/PEAR/.filemap
+Libs/PEAR/.lock
+Libs/PEAR/.registry/
+user/cache
+
