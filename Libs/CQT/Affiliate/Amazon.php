@@ -58,7 +58,7 @@ class CQT_Affiliate_Amazon implements CQT_Affiliate_ProviderInterface
      * @param array $request_options
      * @param array $parse_options
      */
-    public function findByKeyword($keyword, $request_options = null, $parse_options = null)
+    public function findByKeyword($keyword, $request_options = array(), $parse_options = array())
     {
         // キャッシュ用のキー
         $query = $this->_config->toString() . $keyword;
@@ -183,7 +183,7 @@ class CQT_Affiliate_Amazon implements CQT_Affiliate_ProviderInterface
      */
     public function getImages($id, $options = null)
     {
-        $items = $this->findById($id);
+        $items = $this->findById($id, array('ResponseGroup' => 'Large'));
         $images = array();
 
         $i = 0;

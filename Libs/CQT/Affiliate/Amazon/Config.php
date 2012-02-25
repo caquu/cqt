@@ -12,6 +12,14 @@ class CQT_Affiliate_Amazon_Config implements CQT_Affiliate_ConfigInterface
     private $_secret_accesskey = '';
     private $_cache = null;
 
+    /**
+     * コンストラクタ
+     *
+     * @param string $accesskey
+     * @param string $tag
+     * @param string $secretkey
+     * @param CQT_Cache_Interface $cache
+     */
     public function __construct($accesskey, $tag, $secretkey, CQT_Cache_Interface $cache = null)
     {
         $this->_access_key = $accesskey;
@@ -23,16 +31,31 @@ class CQT_Affiliate_Amazon_Config implements CQT_Affiliate_ConfigInterface
         }
     }
 
+    /**
+     * 設定されているアクセスキーを取得
+     *
+     * @return string
+     */
     public function getAccesskey()
     {
         return $this->_access_key;
     }
 
+    /**
+     * 設定されているアソシエイトタグを取得
+     *
+     * @return string
+     */
     public function getAssociatetag()
     {
         return $this->_associate_tag;
     }
 
+    /**
+     * 設定されている秘密鍵を取得
+     *
+     * @return string
+     */
     public function getSecretkey()
     {
         return $this->_secret_accesskey;

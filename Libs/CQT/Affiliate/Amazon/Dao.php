@@ -117,7 +117,7 @@ class CQT_Affiliate_Amazon_Dao
     private $params = array(
             'Operation'        => null,
             'SearchIndex'      => null,
-            'OperationOptions' => array(),
+            'OperationOption' => array(),
     );
 
     /**
@@ -226,14 +226,14 @@ class CQT_Affiliate_Amazon_Dao
      */
     public function findById($id, $options = array())
     {
-        $this->setParams('ItemLookup', 'All', array_merge($options, array('ItemId' => $id, 'MerchantId' => 'All')));
+        $this->setParams('ItemLookup', null, array_merge($options, array('ItemId' => $id, 'MerchantId' => 'All')));
         $this->buildQuery();
         return $this->send();
     }
 
     public function findByKeyword($word, $options = null)
     {
-        $this->setParams('ItemSearch', 'All', array_merge($options, array('Keywords' => $word, 'MerchantId' => 'All')));
+        $this->setParams('ItemSearch', 'All', array_merge($options, array('Keywords' => $word)));
         $this->buildQuery();
         return $this->send();
     }
@@ -265,9 +265,10 @@ class CQT_Affiliate_Amazon_Dao
         $defaults = $this->getParams();
         $options = array();
 
-        // 設定されてるオプションが利用可能かチェック
+        // 設定されてるオプションが利用可能かつnullでない場合
+        // リクエストとして利用する
         foreach ($defaults['OperationOption'] as $key => $value) {
-            if (isset($this->operations[$defaults['Operation']])) {
+            if (isset($this->operations[$defaults['Operation']]) && !is_null($value)) {
                 $options[$key] = $value;
             }
         }
@@ -284,7 +285,6 @@ class CQT_Affiliate_Amazon_Dao
                                         ),
                                         $options);
         ksort($request_params);
-
 
         // クエリ作成
         //   - 値がnullのものはクエリに利用しない
