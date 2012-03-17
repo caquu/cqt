@@ -14,6 +14,8 @@ class CQT_Cache_Zend_File extends CQT_Cache_Zend
     protected $_backend_options = array(
                 'cache_dir' => null,
                 'file_name_prefix' => 'cqt_',
+                'hashed_directory_umask' => 0777,
+                'cache_file_umask' => 0666
             );
 
 
