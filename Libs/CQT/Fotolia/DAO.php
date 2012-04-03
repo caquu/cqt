@@ -185,7 +185,7 @@ class CQT_Fotolia_DAO
         if ($result === false) {
             throw new Exception('取得に失敗しました。');
         } else {
-            $items = CQT_Fotolia_ResponsParser::parse(simplexml_load_string($result));
+            $items = CQT_Fotolia_ResponsParser::parse(simplexml_load_string($result), $this->_profile);
             if ($this->isCache()) {
                 $cache_id = $this->generateCacheId($xml);
                 $this->_cache->save($cache_id, $items);

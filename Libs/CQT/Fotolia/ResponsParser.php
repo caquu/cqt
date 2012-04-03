@@ -6,57 +6,61 @@
  */
 class CQT_Fotolia_ResponsParser
 {
-
+    /**
+     * エラーコード
+     *
+     * @var array
+     */
     static public $err_code = array(
-    '001' => array(
-    'title_en' => 'Service currently unavailable',
-    'comment_en' => 'The requested service is temporarily unavailable.',
-    ),
+        '001' => array(
+            'title_en' => 'Service currently unavailable',
+            'comment_en' => 'The requested service is temporarily unavailable.',
+        ),
 
-    '002' => array(
-    'title_en' => 'Failed to parse request',
-    'comment_en' => 'The XML-RPC request document could not be parsed.',
-    ),
+        '002' => array(
+            'title_en' => 'Failed to parse request',
+            'comment_en' => 'The XML-RPC request document could not be parsed.',
+        ),
 
-    '010' => array(
-    'title_en' => 'Missing API Key',
-    'comment_en' => 'The API key passed is missing.',
-    ),
+        '010' => array(
+            'title_en' => 'Missing API Key',
+            'comment_en' => 'The API key passed is missing.',
+        ),
 
-    '011' => array(
-    'title_en' => 'Invalid API Key',
-    'comment_en' => 'The API key passed is not valid or has expired.',
-    ),
+        '011' => array(
+            'title_en' => 'Invalid API Key',
+            'comment_en' => 'The API key passed is not valid or has expired.',
+        ),
 
-    '031' => array(
-    'title_en' => 'Invalid Method',
-    'comment_en' => 'This method does not exist in the method list.',
-    ),
+        '031' => array(
+            'title_en' => 'Invalid Method',
+            'comment_en' => 'This method does not exist in the method list.',
+        ),
 
-    '032' => array(
-    'title_en' => 'Method not Available',
-    'comment_en' => 'This method is not available for this API Key.',
-    ),
+        '032' => array(
+            'title_en' => 'Method not Available',
+            'comment_en' => 'This method is not available for this API Key.',
+        ),
 
-    '100' => array(
-    'title_en' => 'Missing Media ID',
-    'comment_en' => 'The media ID is missing. Media ID is required for this method.',
-    ),
+        '100' => array(
+            'title_en' => 'Missing Media ID',
+            'comment_en' => 'The media ID is missing. Media ID is required for this method.',
+        ),
 
-    '101' => array(
-    'title_en' => 'Invalid Media ID',
-    'comment_en' => 'The media ID passed is not valid or doesn\'t correspond to any media.',
-    ),
+        '101' => array(
+            'title_en' => 'Invalid Media ID',
+            'comment_en' => 'The media ID passed is not valid or doesn\'t correspond to any media.',
+        ),
 
-    '2001' => array(
-    'title_en' => 'Invalid Language ID',
-    'comment_en' => 'The language ID passed is not valid or doesn\'t exist in the fotolia available language list.',
-    ),
+        '2001' => array(
+            'title_en' => 'Invalid Language ID',
+            'comment_en' => 'The language ID passed is not valid or doesn\'t exist in the fotolia available language list.',
+        ),
 
-    '2101' => array(
-    'title_en' => 'Invalid Thumbnail Size',
-    'comment_en' => 'The thumbnail size passed is not valid or doesn\'t exist in the fotolia available thumbnail size list.',
-    ),
+        '2101' => array(
+            'title_en' => 'Invalid Thumbnail Size',
+            'comment_en' => 'The thumbnail size passed is not valid or doesn\'t exist in the fotolia available thumbnail size list.',
+        ),
     );
 
 
@@ -76,18 +80,16 @@ class CQT_Fotolia_ResponsParser
      * @return Array
      */
 
-    public function parse($sxe)
+    public function parse($sxe, stdClass $profile)
     {
         if (isset($sxe->fault)) {
             return  self::parseError($sxe);
         }
 
         $items = $sxe->params->param->value->struct;
-
         $arr = array();
 
         foreach ($items->children() as $child) {
-
             $key = (string) $child->name;
             switch ($key) {
                 case 'id':
@@ -103,6 +105,12 @@ class CQT_Fotolia_ResponsParser
                     $arr[$key] = (string) $child->value->children();
                     break;
             }
+            // 拡張パラメーター
+            // アフィリエイト用の画像の著者ページ
+            $arr['ex_affiliate_url_creator'] = sprintf('http://jp.fotolia.com/p/%s/partner/%s', $arr['creator_id'], $profile->pid);
+
+            // アフィリエイト用の画像ページ
+            $arr['ex_affiliate_url_media'] = sprintf('http://jp.fotolia.com/id/%s/partner/%s', $arr['id'], $profile->pid);
         }
         return $arr;
     }
