@@ -5,7 +5,6 @@
  */
 class CQT_SiteTemplate_Application
 {
-
     /**
      * アプリケーションの初期設定
      *
@@ -43,11 +42,22 @@ class CQT_SiteTemplate_Application
         $this->router  = new CQT_SiteTemplate_Router($query);
     }
 
+    /**
+     * レンダリング結果を保存
+     *
+     * @param string $string
+     * @return void
+     */
     public function setResponse($string)
     {
         $this->response = $string;
     }
 
+    /**
+     * レンダリング結果の取得
+     *
+     * @return string
+     */
     public function getResponse()
     {
         return $this->response;
@@ -55,7 +65,6 @@ class CQT_SiteTemplate_Application
 
     public function run()
     {
-
         // アプリケーションのコントローラーディレクトリ
         $dir_app_controller = $this->settings->find('App.Controller');
 
@@ -97,4 +106,3 @@ class CQT_SiteTemplate_Application
         $this->setResponse($c->getResult());
     }
 }
-

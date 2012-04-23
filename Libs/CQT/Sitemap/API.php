@@ -126,51 +126,33 @@ class CQT_Sitemap_API
         return $page;
     }
 
-    function get($query = null)
+    public function get($query = null)
     {
 
         return $this->_map->find($query);
     }
 
-    function getChild($query)
+    public function getChild($query)
     {
         return CQT_Sitemap::factory($this->get($query));
     }
 
 
 
-    function dump($query = null)
+    public function dump($query = null)
     {
         $sitemap = $this->get($query);
         $this->_parse($sitemap);
     }
 
 
-    function _parse($sitemap) {
-
+    private function _parse($sitemap)
+    {
         foreach ($sitemap as $key => $value) {
-
             $result = $this->addEventListener($key, $sitemap);
-
-
             if (isset($value['child'])) {
                 $this->_parse($value['child']);
             }
-
-
-            /*
-            $this->addEventListener($key);
-
-            if (is_array($value)) {
-                $this->_parse($value);
-            } else {
-                if ($key === 'name') {
-                    echo $key . ':' . $value . '<br />';
-                }
-            }
-            */
-
-
         }
     }
 
@@ -341,13 +323,6 @@ class CQT_Sitemap_API
 
         if (isset($item['attributes']['page'])) {
             switch ($item['attributes']['page']) {
-                /*
-                case false:
-
-                    $html = $item['name'];
-
-                    break;
-                */
                 case 'parent':
 
                     $parent = $this->getParent($query);
@@ -380,14 +355,7 @@ class CQT_Sitemap_API
             );
         }
         return $html;
-
-
-        //return sprintf('<a href="/%s/">%s</a>', $path, $name);
     }
-
-
-
-
 
     /**
      * queryで取得した配列を再帰的に
@@ -449,34 +417,34 @@ class CQT_Sitemap_API
     }
 
 
-
-    function lincs($query)
+    /**
+     * リンクの生成
+     *
+     * @param string $query
+     * @return string
+     */
+    public function lincs($query)
     {
         $children = $this->get($query . '@child');
 
+        if ($children instanceof CQT_Dictionary_Error) {
+            return '';
+        } else {
+            $base_path = str_replace('.', '/', $query);
 
-        $base_path = str_replace('.', '/', $query);
-
-        foreach ($children as $key => $value) {
-            $name = $value['name'];
-            $path = $base_path . '/' . $key;
-            $lincs[] = sprintf('<a href="/%s/">%s</a>', $path, $name);
-
+            foreach ($children as $key => $value) {
+                $name = $value['name'];
+                $path = $base_path . '/' . $key;
+                $lincs[] = sprintf('<a href="/%s/">%s</a>', $path, $name);
+            }
+            return $lincs;
         }
-        return $lincs;
     }
-
-
-
-
 
     public function insert($path, $value)
     {
         $this->_map->insert($path, $value);
     }
-
-
-
 
     function xml($domain = '', $query = 'home')
     {
@@ -519,7 +487,6 @@ class CQT_Sitemap_API
      */
     function getPathForQuery($query)
     {
-
         $arr = explode('.', $query);
         $path = is_null($this->_prefix) ? '/' : $this->_prefix;
 
@@ -530,16 +497,6 @@ class CQT_Sitemap_API
 
         }
         return $path;
-
-        /*
-        $string = str_replace('home.', '/', $string);
-        $string = str_replace('.', '/', $string);
-        $string = str_replace('@child', '', $string);
-        $string = str_replace('@', '/', $string);
-
-
-        return $string;
-        */
     }
 
 
@@ -565,7 +522,6 @@ class CQT_Sitemap_API
             return false;
         }
     }
-
 
     function setPrefix($path_to_home) {
         $this->_prefix = $path_to_home;

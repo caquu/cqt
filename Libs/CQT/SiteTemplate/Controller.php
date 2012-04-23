@@ -1,17 +1,37 @@
 <?php
+/**
+ *
+ * @package CQT_SiteTemplate
+ */
 class CQT_SiteTemplate_Controller
 {
-    // コントローラー名
+    /**
+     * コントローラー名
+     *
+     * @var string
+     */
     private $controller = null;
 
-    // アクション名
+    /**
+     * アクション名
+     *
+     * @var string
+     */
     private $action = null;
 
-    // アクションの引数
+    /**
+     * アクションの引数
+     *
+     * @var string
+     */
     protected $params = null;
 
 
-    // ビューオブジェクト
+    /**
+     * ビューオブジェクト
+     *
+     * @var object CQT_SiteTemplate_View
+     */
     protected $view = null;
 
     /**
@@ -20,26 +40,39 @@ class CQT_SiteTemplate_Controller
      * @param boolean
      */
     public $use_models = true;
-    //private $_models = array();
+
+    /**
+     * App_Controller::use_modelsとインスタンス化したコントローラーの
+     * $use_modelsをマージした配列
+     *
+     * @var array
+     */
+    private $model_classies = array();
 
 
-
-    // ドキュメントルート以下のパス
-    // query   フレームワークが利用するURL
-    // request 実際にアクセスしているURL
+    /**
+     * ドキュメントルート以下のパス
+     *
+     * query   フレームワークが利用するURL
+     * request 実際にアクセスしているURL
+     *
+     */
     private $query = array(
                 'string' => '',
-                'array' => array()
+                'array'  => array()
                 );
 
-
-
-
-
+    /**
+     * @var CQT_Net_UserAgent
+     */
     public $client = null;
 
+    /**
+     * レンダリング結果
+     *
+     * @var string
+     */
     private $result = '';
-    //var $use_dictionary = false;
 
     /**
      * @var CQT_SiteTemplate_Application
@@ -81,38 +114,46 @@ class CQT_SiteTemplate_Controller
         $this->view->setStorage($app->router->getQuery('string') . '/');
 
 
-        // Dictioanryを生成
+        // Modelを生成
+        //
+        // インスタンス化されているコントローラーのuse_modelsと
+        // CQT_AppControllerが利用されていてuse_modelsがfalseでない場合
+        // マージする
         if ($this->use_models !== false) {
 
-            // コントローラー名と同名のDictionaryを生成
+            // コントローラー名と同名のModelを生成
             $models = array();
             $models[] = ucfirst($this->controller);
 
             // 配列の場合、コントローラー名を追加
             if (is_array($this->use_models)) {
-                $this->_models = array_merge($models, $this->use_models);
+                $this->model_classies = array_merge($models, $this->use_models);
             } else {
-                $this->_models = $models;
-            }
-
-            foreach ($this->_models as $value) {
-
-                $this->createModel($value);
+                $this->model_classies = $models;
             }
         }
 
+        // CQT_AppController::use_models の調査
+        if (is_subclass_of($this, 'CQT_AppController')
+            && property_exists('CQT_AppController', 'use_models')) {
+
+            $app_vars = get_class_vars('CQT_AppController');
+            if (isset($app_vars['use_models']) && $app_vars['use_models'] !== false) {
+                $this->model_classies = array_merge($this->model_classies, $app_vars['use_models']);
+            }
+        }
+
+        foreach ($this->model_classies as $value) {
+            $this->createModel($value);
+        }
 
         $this->client = CQT_Net::factory('UserAgent');
-
-
-
     }
 
     private function setupView()
     {
 
     }
-
 
     /**
      * オートレイアウトを使用するか
@@ -145,9 +186,12 @@ class CQT_SiteTemplate_Controller
     }
 
     /**
+     * 設定されているアクションを実行
      *
-     * 設定されているメソッドを実行
+     * アクションが見つからない場合、scapegoatAction()をコールする
+     * それでも見つからない場合は
      *
+     * @return void
      */
     public function execute()
     {
@@ -159,20 +203,27 @@ class CQT_SiteTemplate_Controller
                 call_user_func(array($this, $this->action), $this->params);
             }
         } else {
-            if (method_exists($this, 'doRouting')) {
-                call_user_func(array($this, 'doRouting'), $this->getQuery('array'));
+            if (method_exists($this, 'scapegoatAction')) {
+                call_user_func(array($this, 'scapegoatAction'), $this->getQuery('array'));
             } else {
-                $this->noAction();
+                $this->notFoundAction();
             }
         }
     }
 
-
+    /**
+     * モデルの生成
+     * new されたあと初期化メソッドとしてinitをコールする
+     * (存在してれば)
+     *
+     * @param string $name
+     * @throws Exception
+     */
     protected function createModel($name)
     {
         $file_name = $name . 'Model';
         $propety_name = ucfirst($name);
-        $class_name = $propety_name . 'Model';
+        $class_name = 'CQT_' . $propety_name . 'Model';
 
         $path_to_model = $this->app->settings->find('App.Model') . $file_name . '.php';
 
@@ -185,14 +236,11 @@ class CQT_SiteTemplate_Controller
         if (is_readable($path_to_model)) {
             require_once $path_to_model;
             $this->{$propety_name} = new $class_name();
-            
             if (method_exists($this->{$propety_name}, 'init')) {
-            	call_user_func(array($this->{$propety_name}, 'init'));
+                call_user_func(array($this->{$propety_name}, 'init'));
             }
         }
     }
-
-
 
     public function render($render_option = CQT_SiteTemplate_View::ALL)
     {
@@ -202,17 +250,26 @@ class CQT_SiteTemplate_Controller
             if (method_exists($this, $e->getCallbak())) {
                 call_user_func(array($this, $e->getCallbak()), $this->getQuery('array'));
             }
-
             $this->result = $this->view->render($render_option);
         }
     }
 
+    /**
+     * レンダリング結果を取得
+     *
+     * @return string
+     */
     public function getResult()
     {
         return $this->result;
     }
 
-
+    /**
+     * ビュー、レイアウトに変数をセットする
+     *
+     * @param string $key ビューで利用する変数名
+     * @param mixed $value
+     */
     protected function set($key, $value)
     {
         $this->view->set($key, $value);
@@ -234,7 +291,9 @@ class CQT_SiteTemplate_Controller
     }
 
     /**
+     * 利用するビューファイル
      *
+     * @param string $path_to_file app/view/ からのパス
      */
     protected function useViewfile($path_to_file)
     {
@@ -243,7 +302,7 @@ class CQT_SiteTemplate_Controller
 
     /**
      * パス情報を取得
-     * Enter description here ...
+     *
      * @param String $key  query | request
      * @param String $type Array | String
      *
@@ -254,6 +313,11 @@ class CQT_SiteTemplate_Controller
         return $this->query[$key];
     }
 
+    /**
+     * コントローラー名の取得
+     *
+     * @return string
+     */
     public function getName()
     {
         return $this->controller;
@@ -279,13 +343,16 @@ class CQT_SiteTemplate_Controller
         $this->action = $action;
     }
 
-
-    public function noAction()
+    /**
+     * アクションが見つからない場合に呼び出されるコールバック
+     *
+     * @return void
+     */
+    public function notFoundAction()
     {
         $this->useLayout('error');
         $this->app->header->setHeader(404);
         $this->useViewfile('action_not_found');
-
     }
 
     public function view_not_found()
@@ -304,5 +371,12 @@ class CQT_SiteTemplate_Controller
         $this->view->contentType($string);
     }
 
-
+    /**
+     * アクションがない場合のコールバック
+     *
+     * @param array $query
+     */
+    public function scapegoatAction($query)
+    {
+    }
 }

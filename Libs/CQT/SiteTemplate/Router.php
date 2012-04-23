@@ -12,16 +12,27 @@ class CQT_SiteTemplate_Router
 
     const CONTROLLER_SUFFIX = 'Controller';
 
-
-    // デフォルトのコントローラー名
-    // コントローラー名が無い場合(ドキュメントルートへのアクセス)に使われる
+    /**
+     * コントローラー名
+     * コントローラー名が無い場合(ドキュメントルートへのアクセス)に使われる
+     *
+     * @var string
+     */
     private $_controller = 'home';
 
-    // デフォルトのアクション名
-    // アクション名が無い場合(ディレクトリ直下へのアクセス)に使われる
+    /**
+     * デフォルトのアクション名
+     * アクション名が無い場合(ディレクトリ直下へのアクセス)に使われる
+     *
+     * @var string
+     */
     private $_action = 'index';
 
-    // アクションの引数
+    /**
+     * アクションの引数
+     *
+     * @var array
+     */
     private $_params = null;
 
     // クエリ
@@ -29,7 +40,6 @@ class CQT_SiteTemplate_Router
         'string' => '',
         'array'  => ''
     );
-
 
     /**
      * コンストラクタ
@@ -111,9 +121,13 @@ class CQT_SiteTemplate_Router
         return $this->_action;
     }
 
+    /**
+     * アクションに渡される引数
+     *
+     * @return array
+     */
     public function getParams()
     {
-
         return $this->_params;
     }
 
@@ -131,5 +145,4 @@ class CQT_SiteTemplate_Router
     {
         return $this->_path_vars;
     }
-
 }

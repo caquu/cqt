@@ -1,4 +1,5 @@
 <?php
+require_once 'spyc-0.5' . DS . 'spyc.php';
 /**
  * サイトのテンプレート
  *

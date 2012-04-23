@@ -81,11 +81,10 @@ class CQT_SiteTemplate_View
      * @var array
      */
     private $code = array(
-        'js' => array(),
+        'js'     => array(),
         'jquery' => array(),
-        'css' => array()
+        'css'    => array()
     );
-
 
     /**
      * エレメントの検索パス
@@ -131,7 +130,11 @@ class CQT_SiteTemplate_View
     private $smartphone_layout = false;
 
 
-
+    /**
+     * コンストラクタ
+     *
+     * @param CQT_Dictionary_Interface $settings
+     */
     public function __construct(CQT_Dictionary_Interface $settings)
     {
         $this->settings = $settings;
@@ -156,12 +159,13 @@ class CQT_SiteTemplate_View
         // ストレージのパス
         $this->storage['server_root'] = $settings->find('App.Public') . $settings->find('Content.Dirname.Storage') . DS;
         $this->storage['public_root'] = $settings->find('Content.Storage');
-
-
-        //$this->controller = $controller;
-        //$this->app         = $controller->app;
     }
 
+    /**
+     * ビューとレイアウトのレンダリング
+     *
+     * @param string $render_option
+     */
     public function render($render_option = self::ALL)
     {
         $contents = '';
@@ -171,9 +175,7 @@ class CQT_SiteTemplate_View
             $contents = $this->renderLayout($contents);
         }
         return $contents;
-
     }
-
 
     /**
      * ビューファイルのレンダリング
@@ -213,6 +215,11 @@ class CQT_SiteTemplate_View
         return ob_get_clean();
     }
 
+    /**
+     * レイアウトのレンダリング
+     *
+     * @param string $content_for_layout ビューのレンダリング結果
+     */
     private function renderLayout($content_for_layout = null)
     {
         extract($this->_vars);
@@ -225,6 +232,12 @@ class CQT_SiteTemplate_View
         return ob_get_clean();
     }
 
+    /**
+     * レイアウトファイルを取得
+     *
+     * スマホの場合 app/layout/smartphone/ 以下を探す
+     * それ以外は app/layout/ 以下
+     */
     private function getLayoutFile()
     {
         $theme_dir = empty($this->theme) ? $this->layout['dir'] : $this->layout['dir'] . $this->theme . DS;
@@ -369,11 +382,25 @@ class CQT_SiteTemplate_View
      * ビューで利用する外部ファイルを設定する
      *
      * @param string $js css|js|element
-     * @param string $path_to_file
+     * @param string|array $path_to_file
+     * @throws Exception
      */
     public function setElement($type, $path_to_file)
     {
-        $this->files[$type][] = $path_to_file;
+        if (!array_key_exists($type, $this->files)) {
+            throw new Exception('TypeError use css|js|element');
+        }
+
+        if (is_array($path_to_file)) {
+            foreach ($path_to_file as $value) {
+                $this->files[$type][] = $value;
+            }
+        } elseif (is_string($path_to_file)) {
+            $this->files[$type][] = $path_to_file;
+        } else {
+            throw new Exception('TypeError use string|array');
+        }
+
     }
 
     /**
@@ -398,6 +425,7 @@ class CQT_SiteTemplate_View
                 break;
         }
     }
+
    /**
     * Javascriptファイルの出力
     *
@@ -539,6 +567,101 @@ class CQT_SiteTemplate_View
             $this->content_type = $type;
         }
         return $this->content_type;
+    }
+
+    /**
+     * YAMLで各種設定
+     *
+     * @param string $yaml
+     */
+    public function setConfig($yaml)
+    {
+        if (function_exists('yaml_parse')) {
+            $vars = yaml_parse($yaml);
+        } else {
+            $vars = Spyc::YAMLLoad($yaml);
+        }
+
+        foreach ($vars as $section => $section_value) {
+            switch ($section) {
+                case 'files':
+                    if (is_array($section_value)) {
+                        foreach ($section_value as $key => $value) {
+                            $this->setElement($key, $value);
+                        }
+                    }
+
+                    break;
+
+                case 'page':
+                    $page_data = array(
+                        'name'    => '',
+                        'keyword' => '',
+                        'desc'    => ''
+                    );
+
+                    if (is_array($section_value)) {
+                        foreach ($section_value as $key => $value) {
+                            switch ($key) {
+                                case 'name':
+                                case 'keyword':
+                                case 'desc':
+                                case 'child':
+                                    $page_data[$key] = $value;
+                                    break;
+                            }
+                        }
+                        $page = CQT_Sitemap::factoryPage($page_data);
+                        if (isset($this->_vars['page']) && $this->_vars['page'] instanceof CQT_Sitemap_Page) {
+                            $_page_props = get_object_vars($this->_vars['page']);
+                            $page_props  = get_object_vars($page);
+
+                            foreach ($page_props as $key => $value) {
+                                if (!is_null($value)) {
+                                    $this->_vars['page']->{$key} = $value;
+                                }
+                            }
+                        } else {
+                            $this->set('page', $page);
+                        }
+
+                    }
+
+                    break;
+
+                case 'code':
+                    if (is_array($section_value)) {
+                        foreach ($section_value as $key => $value) {
+                            $this->setCode($key, $value);
+                        }
+                    }
+                    break;
+
+                case 'vars':
+                    if (is_array($section_value)) {
+                        foreach ($section_value as $key => $value) {
+                            $this->set($key, $value);
+                        }
+                    }
+                    break;
+            }
+        }
+    }
+
+    public function setCode($namespace, $code)
+    {
+        if (isset($this->code[$namespace])) {
+            if (is_array($code)) {
+                foreach ($code as $value) {
+                    $this->code[$namespace][] = $value;
+                }
+            } elseif (is_string($code)) {
+                $this->code[$namespace][] = $code;
+            }
+
+        } else {
+            throw new Exception('js|css|jQuery');
+        }
     }
 
 }
