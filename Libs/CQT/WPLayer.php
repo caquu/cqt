@@ -86,13 +86,13 @@ class CQT_WPLayer
     {
         $terms = new CQT_WPLayer_Terms();
 
-        if ($term instanceof stdClass) {
+        if ($term instanceof stdClass || $term instanceof WP_Term) {
             $terms->add(new CQT_WPLayer_Term($term));
         } elseif (is_numeric($term)) {
             $terms->add(new CQT_WPLayer_Term((int) $term, $taxonomy));
         } elseif (is_array($term)) {
             foreach ($term as $val) {
-                if ($val instanceof stdClass) {
+                if ($val instanceof stdClass || $val instanceof WP_Term) {
                     $terms->add(new CQT_WPLayer_Term($val));
                 }
 

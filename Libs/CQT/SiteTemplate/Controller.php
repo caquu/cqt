@@ -223,22 +223,18 @@ class CQT_SiteTemplate_Controller
     {
         $file_name = $name . 'Model';
         $propety_name = ucfirst($name);
-        $class_name = 'CQT_' . $propety_name . 'Model';
+        $class_name = $propety_name . 'Model';
 
         $path_to_model = $this->app->settings->find('App.Model') . $file_name . '.php';
 
         if (is_readable($path_to_model)) {
             require_once $path_to_model;
-        } else {
-            throw new Exception($path_to_model . 'が読み込めません');
-        }
-
-        if (is_readable($path_to_model)) {
-            require_once $path_to_model;
-            $this->{$propety_name} = new $class_name();
+            $this->{$propety_name} = new $class_name($this);
             if (method_exists($this->{$propety_name}, 'init')) {
                 call_user_func(array($this->{$propety_name}, 'init'));
             }
+        } else {
+            throw new Exception($path_to_model . 'が読み込めません');
         }
     }
 
@@ -333,9 +329,9 @@ class CQT_SiteTemplate_Controller
         $this->view->setElement($type, $filename);
     }
 
-    protected function setJsCode($code)
+    protected function setCode($namespace, $code)
     {
-        $this->view->setJsCode($code);
+        $this->view->setCode($namespace, $code);
     }
 
     public function setAction($action)

@@ -37,7 +37,7 @@ class CQT_Feed
         if (!is_null($cache) && $cache->findById(md5($url))) {
             $sxe = new SimpleXMLElement($cache->findById(md5($url)));
         } else {
-            $conts = file_get_contents($url);
+            $conts = trim(file_get_contents($url));
 
             if ($conts === false) {
                 //throw new Exception($url . 'が取得できません');

@@ -46,6 +46,13 @@ class CQT
         return str_replace($keys, $vals, $template);
     }
 
+
+    public static function stream($path_to_file)
+    {
+        return file_get_contents($path_to_file);
+    }
+
+
     /**
      * PEAR::Text_Highlighterを利用して
      * ソースコードのハイライトを行います。

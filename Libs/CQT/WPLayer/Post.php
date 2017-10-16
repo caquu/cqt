@@ -34,9 +34,9 @@ class CQT_WPLayer_Post implements CQT_WPLayer_PostInterface
      * post_type             投稿タイプ
      * post_mime_type        投稿のminetype
      * comment_count
+     * filter                3.5で追加？
      *
-     *
-     * @var (stdClass) object
+     * @var WW_Post object
      */
     private $post = null;
 
@@ -155,7 +155,7 @@ class CQT_WPLayer_Post implements CQT_WPLayer_PostInterface
         	// Fatal error: Only variables can be passed by reference
         	$post = (int) $post;
             $this->post = get_post($post, OBJECT);
-        } elseif ($post instanceof stdClass) {
+        } elseif ($post instanceof WP_Post) {
             $this->post = $post;
         }
 
@@ -614,6 +614,111 @@ class CQT_WPLayer_Post implements CQT_WPLayer_PostInterface
         return '<table class="cqt-dump">' . $html . '</table>';
     }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Retrieve adjacent post.
+     *
+     * Can either be next or previous post.
+     *
+     * @since 2.5.0
+     *
+     * @param bool $in_same_cat Optional. Whether post should be in a same category.
+     * @param array|string $excluded_categories Optional. Array or comma-separated list of excluded category IDs.
+     * @param bool $previous Optional. Whether to retrieve previous post.
+     * @return mixed Post object if successful. Null if global $post is not set. Empty string if no corresponding post exists.
+     */
+    function get_adjacent_post( $in_same_cat = false, $excluded_categories = '', $previous = true ) {
+        global $wpdb;
+        $post = $this->post;
+        if ( ! $post = get_post() )
+            return null;
+
+        $current_post_date = $post->post_date;
+
+        $join = '';
+        $posts_in_ex_cats_sql = '';
+        if ( $in_same_cat || ! empty( $excluded_categories ) ) {
+            $join = " INNER JOIN $wpdb->term_relationships AS tr ON p.ID = tr.object_id INNER JOIN $wpdb->term_taxonomy tt ON tr.term_taxonomy_id = tt.term_taxonomy_id";
+
+            if ( $in_same_cat ) {
+                if ( ! is_object_in_taxonomy( $post->post_type, 'category' ) )
+                    return '';
+                $cat_array = wp_get_object_terms($post->ID, 'category', array('fields' => 'ids'));
+                if ( ! $cat_array || is_wp_error( $cat_array ) )
+                    return '';
+                $join .= " AND tt.taxonomy = 'category' AND tt.term_id IN (" . implode(',', $cat_array) . ")";
+            }
+
+            $posts_in_ex_cats_sql = "AND tt.taxonomy = 'category'";
+            if ( ! empty( $excluded_categories ) ) {
+                if ( ! is_array( $excluded_categories ) ) {
+                    // back-compat, $excluded_categories used to be IDs separated by " and "
+                    if ( strpos( $excluded_categories, ' and ' ) !== false ) {
+                        _deprecated_argument( __FUNCTION__, '3.3', sprintf( __( 'Use commas instead of %s to separate excluded categories.' ), "'and'" ) );
+                        $excluded_categories = explode( ' and ', $excluded_categories );
+                    } else {
+                        $excluded_categories = explode( ',', $excluded_categories );
+                    }
+                }
+
+                $excluded_categories = array_map( 'intval', $excluded_categories );
+
+                if ( ! empty( $cat_array ) ) {
+                    $excluded_categories = array_diff($excluded_categories, $cat_array);
+                    $posts_in_ex_cats_sql = '';
+                }
+
+                if ( !empty($excluded_categories) ) {
+                    $posts_in_ex_cats_sql = " AND tt.taxonomy = 'category' AND tt.term_id NOT IN (" . implode($excluded_categories, ',') . ')';
+                }
+            }
+        }
+
+        $adjacent = $previous ? 'previous' : 'next';
+        $op = $previous ? '<' : '>';
+        $order = $previous ? 'DESC' : 'ASC';
+
+        $join  = apply_filters( "get_{$adjacent}_post_join", $join, $in_same_cat, $excluded_categories );
+        $where = apply_filters( "get_{$adjacent}_post_where", $wpdb->prepare("WHERE p.post_date $op %s AND p.post_type = %s AND p.post_status = 'publish' $posts_in_ex_cats_sql", $current_post_date, $post->post_type), $in_same_cat, $excluded_categories );
+        $sort  = apply_filters( "get_{$adjacent}_post_sort", "ORDER BY p.post_date $order LIMIT 1" );
+
+        $query = "SELECT p.id FROM $wpdb->posts AS p $join $where $sort";
+        $query_key = 'adjacent_post_' . md5($query);
+        $result = wp_cache_get($query_key, 'counts');
+        if ( false !== $result ) {
+            if ( $result )
+                $result = get_post( $result );
+            return $result;
+        }
+
+        $result = $wpdb->get_var( $query );
+        if ( null === $result )
+            $result = '';
+
+        wp_cache_set($query_key, $result, 'counts');
+
+        if ( $result )
+            $result = get_post( $result );
+
+        return $result;
+    }
+
+
+
+
     /**
      * グローバルの$postを利用しないようにする
      *
@@ -628,6 +733,7 @@ class CQT_WPLayer_Post implements CQT_WPLayer_PostInterface
      * @param bool $previous Optional. Whether to retrieve previous post.
      * @return mixed Post object if successful. Null if global $post is not set. Empty string if no corresponding post exists.
      */
+    /*
     private function get_adjacent_post( $in_same_cat = false, $excluded_categories = '', $previous = true ) {
         global $wpdb;
 
@@ -694,4 +800,5 @@ class CQT_WPLayer_Post implements CQT_WPLayer_PostInterface
         wp_cache_set($query_key, $result, 'counts');
         return $result;
     }
+    */
 }

@@ -177,6 +177,36 @@ class CQT_SiteTemplate_View
         return $contents;
     }
 
+    public function getViewfile()
+    {
+        // レンダリングするファイル
+        $viewfile = $this->view['dir'] . $this->view['file'];
+
+        if (!is_file($viewfile)) {
+            if (is_file($viewfile . $this->view['ext'])) {
+                $viewfile = $viewfile . $this->view['ext'];
+            } else {
+                // ファイルが見つからない場合_error/のファイルを使う
+                $view_file = $this->view_error['dir'] . $this->view_error['file'];
+
+                if (!is_file($view_file)) {
+                    $viewfile = $view_file . $this->view_error['ext'];
+                    if (!is_file($view_file)) {
+
+                        // エラー表示に切り替え
+                        $this->view['dir']  = $this->view_error['dir'];
+                        $this->view['file'] = 'view_not_found.php';
+
+                        $exception = new CQT_SiteTemplate_Exception('ビューファイルが見つかりません。' . $this->view['dir'] . $this->view['file']);
+                        $exception->setType(CQT_SiteTemplate_Exception::TYPE_NOTFOUND_VIEW);
+                        throw $exception;
+                    }
+                }
+            }
+        }
+
+        return $viewfile;
+    }
     /**
      * ビューファイルのレンダリング
      *

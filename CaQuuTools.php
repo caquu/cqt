@@ -30,8 +30,11 @@ class CaQuuTools
             if (!class_exists('Zend_Loader_Autoloader')) {
                 require_once 'Zend/Loader/Autoloader.php';
             }
-            $zend = Zend_Loader_Autoloader::getInstance();
-            $zend->setFallbackAutoloader(true);
+            $autoloader = Zend_Loader_Autoloader::getInstance();
+            //$autoloader->registerNamespace('CQT_');
+            //$autoloader->registerNamespace('Net_');
+
+            $autoloader->setFallbackAutoloader(true)->pushAutoloader(NULL, array('wp_', 'WP_', '_WP_'));
         } else {
             spl_autoload_register(array(new self, 'autoloader'));
         }

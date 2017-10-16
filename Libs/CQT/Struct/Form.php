@@ -75,6 +75,10 @@ class CQT_Struct_Form
         return $this->clean->find($key);
     }
 
+    public function findByErrorMessage($key)
+    {
+        return $this->message->find($key);
+    }
 
     public function set($boolean, $key, $value, $message = '')
     {

@@ -50,7 +50,7 @@ class CQT_WPLayer_Term implements CQT_WPLayer_TermInterface
        /**
         * @todo プロパティチェックもする？
         */
-        if ($term instanceof stdClass) {
+        if ($term instanceof stdClass || $term instanceof WP_Term) {
             $this->term = $term;
             //$this->taxonomy = CQT_WPLayer::factoryTaxonomy($term->taxonomy);
         } elseif (is_numeric($term)) {
